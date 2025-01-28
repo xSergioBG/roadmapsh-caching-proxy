@@ -55,7 +55,3 @@ node server.js --port 3000 --origin https://api.ejemplo.com --clear-cache
 ## Registro de Solicitudes
 
 Se usa `morgan` para registrar todas las solicitudes entrantes en la consola.
-
-## Licencia
-
-Este proyecto está bajo la licencia MIT.
