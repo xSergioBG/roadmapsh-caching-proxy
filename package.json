@@ -13,7 +13,7 @@
   "description": "Proxy de aprendizaje para recursos HTTP públicos con caché acotada",
   "dependencies": {
     "express": "^4.21.2",
-    "morgan": "^1.10.0",
+    "morgan": "^1.12.1",
     "yargs": "^17.7.2"
   },
   "engines": {
