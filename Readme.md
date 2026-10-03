@@ -1,59 +1,41 @@
-# Caching Proxy Server 🔗
+# Caching Proxy
 
-*https://roadmap.sh/projects/caching-server*
+Proxy local de aprendizaje para recursos HTTP públicos. Basado en el [proyecto de caché de roadmap.sh](https://roadmap.sh/projects/caching-server).
 
-Este es un servidor proxy de caché basado en Express que actúa como intermediario entre los clientes y un servidor de origen, almacenando en caché las respuestas para optimizar el rendimiento y reducir la carga en el servidor de origen.
+## Instalación y arranque
 
-## Características
-
-- Utiliza Express para gestionar las solicitudes HTTP.
-- Implementa un sistema de caché en memoria con `Map`.
-- Registra las solicitudes usando `morgan`.
-- Permite configurar el puerto y la URL del servidor de origen mediante argumentos de línea de comandos.
-- Opción para limpiar la caché al iniciar.
-
-## Instalación
-
-Asegúrate de tener Node.js instalado en tu sistema. Luego, instala las dependencias necesarias:
+Node.js 22 o posterior; utiliza `fetch` nativo.
 
 ```sh
-npm install
+git clone https://github.com/xSergioBG/roadmapsh-caching-proxy.git
+cd roadmapsh-caching-proxy
+npm ci
+node server.js --port 3000 --origin https://dummyjson.com
 ```
 
-## Uso
+Escucha únicamente en `127.0.0.1`. Por ejemplo, solicita `http://127.0.0.1:3000/products` dos veces y comprueba el encabezado `X-Cache: MISS` seguido de `HIT`.
 
-Ejecuta el servidor con los siguientes argumentos:
+## Comportamiento
+
+- GET y HEAD; otros métodos devuelven 405.
+- Se conserva el estado HTTP y el tipo de contenido del origen.
+- Caché en memoria con duración local de 60 segundos y máximo de 1.000 entradas.
+- Solo se almacenan respuestas GET de estado 200, hasta 1 MiB, sin cookies, Vary ni directivas private/no-store/no-cache.
+- Los errores HTTP no se almacenan. Un fallo de conexión devuelve 502.
+- Las peticiones con Authorization o Cookie se rechazan: este ejemplo solo sirve recursos públicos.
+- Los redireccionamientos del origen se devuelven al cliente.
+- Tiempo máximo de espera del origen: 10 segundos.
+
+`--clear-cache` explica cómo vaciar la caché: reiniciar el proceso que sirve el proxy. Ejecutar un segundo proceso no borra la memoria del primero.
+
+## Límites
+
+Ejemplo educativo, sin persistencia, revalidación HTTP, coordinación distribuida ni administración remota. La caducidad local no implementa todas las directivas HTTP de frescura. El límite de 1 MiB determina qué se almacena; no limita el tamaño descargado de una respuesta. No está preparado para actuar como proxy público de producción.
+
+## Pruebas
 
 ```sh
-node server.js --port <puerto> --origin <URL_ORIGEN>
+npm test
 ```
 
-### Opciones disponibles
-
-| Opción          | Alias | Tipo     | Descripción                                                                |
-| --------------- | ----- | -------- | -------------------------------------------------------------------------- |
-| `--port`        | `-p`  | Número   | Especifica el puerto en el que se ejecutará el servidor.                   |
-| `--origin`      | `-o`  | String   | Define la URL del servidor de origen desde donde se recuperarán los datos. |
-| `--clear-cache` |       | Booleano | Borra la caché antes de iniciar el servidor.                               |
-
-### Ejemplo de uso
-
-```sh
-node server.js --port 3000 --origin https://api.ejemplo.com
-```
-
-Para limpiar la caché antes de ejecutar el servidor:
-
-```sh
-node server.js --port 3000 --origin https://api.ejemplo.com --clear-cache
-```
-
-## Funcionamiento
-
-1. Cuando el proxy recibe una solicitud, primero verifica si la respuesta está en la caché.
-2. Si la respuesta está en caché, la devuelve inmediatamente con un encabezado `X-Cache: HIT`.
-3. Si no está en caché, reenvía la solicitud al servidor de origen, almacena la respuesta en caché y la devuelve con `X-Cache: MISS`.
-
-## Registro de Solicitudes
-
-Se usa `morgan` para registrar todas las solicitudes entrantes en la consola.
+Las pruebas levantan servidores locales y controlan las respuestas del origen: MISS/HIT, filtros de caché, errores, caducidad, capacidad y métodos.
